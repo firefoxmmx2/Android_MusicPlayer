@@ -1,13 +1,62 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="fill_parent"
+              android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    >
-<TextView
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:text="Hello World, MainActivity"
-    />
+    android:orientation="vertical">
+    <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:layout_gravity="left|center_vertical">
+        <ImageView
+                android:layout_width="80sp"
+                android:layout_height="80sp"
+                android:id="@+id/cover" android:minHeight="80sp" android:minWidth="80sp"
+                android:maxHeight="80sp" android:maxWidth="80sp" android:src="@drawable/cover"/>
+        <RelativeLayout
+                android:layout_width="120dp"
+                android:layout_height="match_parent" android:layout_gravity="center">
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Author"
+                    android:id="@+id/songAuthorView"
+                    android:layout_alignParentRight="true" android:layout_below="@+id/songTitleView"/>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Song Title"
+                    android:id="@+id/songTitleView" android:gravity="top" android:layout_gravity="center_horizontal|bottom"
+                    android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+                    android:layout_marginTop="15dp"/>
+            <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="04:03"
+                    android:id="@+id/songTimeLengthView"
+                    android:layout_alignLeft="@+id/songTitleView" android:layout_below="@+id/songAuthorView"/>
+        </RelativeLayout>
+        <RelativeLayout
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent" android:layout_gravity="center">
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/previousButton" android:src="@drawable/previous"
+                    android:layout_alignParentLeft="true" android:layout_marginLeft="9dp"
+                    android:layout_alignTop="@+id/nextButton"/>
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/nextButton" android:src="@drawable/next"
+                    android:layout_toRightOf="@+id/playPauseButton" android:layout_centerVertical="true"
+                    />
+            <ImageButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/playPauseButton"
+                    android:src="@drawable/play" android:layout_toRightOf="@+id/previousButton"
+                    android:layout_alignTop="@+id/previousButton"/>
+        </RelativeLayout>
+    </LinearLayout>
 </LinearLayout>
 
