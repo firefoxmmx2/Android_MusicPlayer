@@ -13,7 +13,7 @@
                 android:id="@+id/cover" android:minHeight="80sp" android:minWidth="80sp"
                 android:maxHeight="80sp" android:maxWidth="80sp" android:src="@drawable/cover"/>
         <RelativeLayout
-                android:layout_width="120dp"
+                android:layout_width="100dp"
                 android:layout_height="match_parent" android:layout_gravity="center">
             <TextView
                     android:layout_width="wrap_content"
@@ -41,20 +41,19 @@
             <ImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/previousButton" android:src="@drawable/previous"
-                    android:layout_alignParentLeft="true" android:layout_marginLeft="9dp"
-                    android:layout_alignTop="@+id/nextButton"/>
+                    android:id="@+id/previousButton" android:src="@drawable/previous_sel"
+                    android:layout_alignParentLeft="true" android:layout_alignTop="@+id/nextButton"/>
             <ImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:id="@+id/nextButton" android:src="@drawable/next"
+                    android:id="@+id/nextButton" android:src="@drawable/next_sel"
                     android:layout_toRightOf="@+id/playPauseButton" android:layout_centerVertical="true"
                     />
             <ImageButton
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:id="@+id/playPauseButton"
-                    android:src="@drawable/play" android:layout_toRightOf="@+id/previousButton"
+                    android:src="@drawable/play_sel" android:layout_toRightOf="@+id/previousButton"
                     android:layout_alignTop="@+id/previousButton"/>
         </RelativeLayout>
     </LinearLayout>
