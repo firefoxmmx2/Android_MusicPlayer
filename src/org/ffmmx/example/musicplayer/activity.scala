@@ -3,12 +3,15 @@ package org.ffmmx.example.musicplayer
 import org.scaloid.common._
 import android.widget.ImageButton
 import android.view.{View, KeyEvent}
+import android.content.{Intent, Context, BroadcastReceiver}
 
 
 class MainActivity extends SActivity {
   override def basis: SActivity = this
 
   implicit override val ctx: SActivity = basis
+
+  var receiver:BroadcastReceiver = _
   onCreate({
     setContentView(R.layout.main)
 
@@ -51,7 +54,8 @@ class MainActivity extends SActivity {
     broadcastReceiver(Constants.MUSIC_PLAYER_ACTION) {
       (context, intent) => {
         // TODO 更新界面图标
-        intent.getIntExtra("playStatus",Constants.PLAY_STATUS_STOP) match {
+        println("="*13+Constants.MUSIC_PLAYER_ACTION+"="*13)
+        intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
           case Constants.PLAY_STATUS_PAUSE =>
             playPauseButton.imageResource(R.drawable.pause_sel)
           case _ =>
@@ -65,11 +69,30 @@ class MainActivity extends SActivity {
       }
     }
 
+//    receiver = new BroadcastReceiver {
+//      def onReceive(context: Context, intent: Intent) {
+//        println("="*13+Constants.MUSIC_PLAYER_ACTION+"="*13)
+//        intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
+//          case Constants.PLAY_STATUS_PAUSE =>
+//            playPauseButton.imageResource(R.drawable.pause_sel)
+//          case _ =>
+//            playPauseButton.imageResource(R.drawable.play_sel)
+//        }
+//
+//      }
+//    }
+//
+//    registerReceiver(receiver,Constants.MUSIC_PLAYER_ACTION)
+
+    sendBroadcast(SIntent(Constants.MUSIC_PLAYER_ACTION))
     //开始播放服务
     startService(SIntent[MusicPlayService])
   })
 
 
+//  onDestroy({
+//    unregisterReceiver(receiver)
+//  })
 }
 
 object Constants {
