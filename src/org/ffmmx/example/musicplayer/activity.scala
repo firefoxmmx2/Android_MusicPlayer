@@ -1,7 +1,7 @@
 package org.ffmmx.example.musicplayer
 
 import org.scaloid.common._
-import android.widget.ImageButton
+import android.widget.{Button, ImageButton}
 import android.view.{View, KeyEvent}
 import android.content.{Intent, Context, BroadcastReceiver}
 
@@ -12,15 +12,17 @@ class MainActivity extends SActivity {
   implicit override val ctx: SActivity = basis
 
   var receiver:BroadcastReceiver = _
+
   onCreate({
     setContentView(R.layout.main)
 
     //播放暂停按钮
-    val playPauseButton = find[ImageButton](R.id.playPauseButton)
+     val playPauseButton = find[ImageButton](R.id.playPauseButton)
       .onClick({
       // 发送播放或者停止请求到播放服务
+
       sendBroadcast(
-        SIntent(Constants.MUSIC_SERVICE_ACTION)
+        new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_PLAYPAUSE)
           .putExtra("song", "")
       )
@@ -31,7 +33,7 @@ class MainActivity extends SActivity {
       .onClick({
       // 发送上一首请求到播放服务
       sendBroadcast(
-        SIntent(Constants.MUSIC_SERVICE_ACTION)
+       new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_PREVIOUS)
           .putExtra("song", "")
 
@@ -43,7 +45,7 @@ class MainActivity extends SActivity {
       .onClick({
       // 发送下一首请求到播放服务
       sendBroadcast(
-        SIntent(Constants.MUSIC_SERVICE_ACTION)
+       new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_NEXT)
           .putExtra("song", "")
       )
@@ -51,49 +53,36 @@ class MainActivity extends SActivity {
 
     // TODO 播放列表
     // 注册播放器广播
-    broadcastReceiver(Constants.MUSIC_PLAYER_ACTION) {
-      (context, intent) => {
-        // TODO 更新界面图标
-        println("="*13+Constants.MUSIC_PLAYER_ACTION+"="*13)
-        intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
-          case Constants.PLAY_STATUS_PAUSE =>
-            playPauseButton.imageResource(R.drawable.pause_sel)
-          case _ =>
-            playPauseButton.imageResource(R.drawable.play_sel)
-        }
-
-        // TODO 更新界面歌曲
-
-        // TODO 更新界面时间
-
-      }
-    }
-
-//    receiver = new BroadcastReceiver {
-//      def onReceive(context: Context, intent: Intent) {
-//        println("="*13+Constants.MUSIC_PLAYER_ACTION+"="*13)
-//        intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
-//          case Constants.PLAY_STATUS_PAUSE =>
-//            playPauseButton.imageResource(R.drawable.pause_sel)
-//          case _ =>
-//            playPauseButton.imageResource(R.drawable.play_sel)
-//        }
-//
-//      }
-//    }
-//
-//    registerReceiver(receiver,Constants.MUSIC_PLAYER_ACTION)
-
-    sendBroadcast(SIntent(Constants.MUSIC_PLAYER_ACTION))
+    receiver = new MusicPlayerBroadcastReceiver()
+    registerReceiver(receiver,Constants.MUSIC_PLAYER_ACTION)
     //开始播放服务
     startService(SIntent[MusicPlayService])
   })
 
+  onDestroy({
+    //注销广播
+    unregisterReceiver(receiver)
+  })
 
-//  onDestroy({
-//    unregisterReceiver(receiver)
-//  })
 }
+
+class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
+  def onReceive(context: Context, intent: Intent) {
+    // TODO 更新界面图标
+    val playPauseButton=context.asInstanceOf[MainActivity].find[ImageButton](R.id.playPauseButton)
+    intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
+      case Constants.PLAY_STATUS_PAUSE =>
+        playPauseButton.imageResource(R.drawable.pause_sel)
+      case _ =>
+        playPauseButton.imageResource(R.drawable.play_sel)
+    }
+
+    // TODO 更新界面歌曲
+
+    // TODO 更新界面时间
+  }
+}
+
 
 object Constants {
   //播放器广播action
