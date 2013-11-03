@@ -1,7 +1,7 @@
 package org.ffmmx.example.musicplayer
 
 import org.scaloid.common._
-import android.widget.{Button, ImageButton}
+import android.widget.{TextView, Button, ImageButton}
 import android.view.{View, KeyEvent}
 import android.content.{Intent, Context, BroadcastReceiver}
 
@@ -13,6 +13,9 @@ class MainActivity extends SActivity {
 
   var receiver:BroadcastReceiver = _
 
+  var songs:List[Song] = List(new Song(R.raw.test_music,"测试","semon"))
+  var playList:List[Song] = _
+
   onCreate({
     setContentView(R.layout.main)
 
@@ -22,9 +25,10 @@ class MainActivity extends SActivity {
       // 发送播放或者停止请求到播放服务
 
       sendBroadcast(
-        new Intent(Constants.MUSIC_SERVICE_ACTION)
+        new  Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_PLAYPAUSE)
-          .putExtra("song", "")
+          .putExtra("song", songs(0))
+
       )
     })
 
@@ -50,6 +54,8 @@ class MainActivity extends SActivity {
           .putExtra("song", "")
       )
     })
+    
+    
 
     // TODO 播放列表
     // 注册播放器广播
@@ -68,21 +74,45 @@ class MainActivity extends SActivity {
 
 class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
   def onReceive(context: Context, intent: Intent) {
-    // TODO 更新界面图标
-    val playPauseButton=context.asInstanceOf[MainActivity].find[ImageButton](R.id.playPauseButton)
+    // 更新界面图标
+    val container=context.asInstanceOf[MainActivity]
+    val songTitleView:TextView=container.find[TextView](R.id.songTitleView)
+    val songAuthorView:TextView=container.find[TextView](R.id.songAuthorView)
+    val songTimeLengthView:TextView=container.find[TextView](R.id.songTimeLengthView)
+
+    val playPauseButton=container.find[ImageButton](R.id.playPauseButton)
     intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
-      case Constants.PLAY_STATUS_PAUSE =>
+      case Constants.PLAY_STATUS_PLAY =>
         playPauseButton.imageResource(R.drawable.pause_sel)
       case _ =>
         playPauseButton.imageResource(R.drawable.play_sel)
     }
 
-    // TODO 更新界面歌曲
-
+    // 更新界面歌曲
+    val songTitle=intent.getStringExtra("songTitle")
+    val songAuthor=intent.getStringExtra("songAuthor")
+    if(songTitle!=null)
+      songAuthorView.text=songAuthor
+    if(songAuthor!=null)
+      songTitleView.text=songTitle
     // TODO 更新界面时间
   }
 }
 
+class Song(val songId:Int,val title:String,val author:String) extends Serializable {
+  var length:Int = _
+  var bitrate:Int = _
+  var star:Int =_
+  var playTimes:Int=_
+
+  def this(songId:Int,title:String,author:String,length:Int,bitrate:Int,star:Int,playTimes:Int) {
+    this(songId,title,author)
+    this.length=length
+    this.bitrate=bitrate
+    this.star=star
+    this.playTimes=playTimes
+  }
+}
 
 object Constants {
   //播放器广播action
