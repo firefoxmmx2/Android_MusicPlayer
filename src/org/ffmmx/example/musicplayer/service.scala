@@ -63,10 +63,11 @@ class MusicPlayService extends SService{
 
   def playPrevious(){
     status = Constants.PLAY_STATUS_PLAY
-
+//    todo 实现上一首
   }
   def playNext(){
     status = Constants.PLAY_STATUS_PLAY
+    // todo 实现下一首
   }
 
   def play(song:Song) {
@@ -91,13 +92,13 @@ class MusicPlayServiceBroadcastReceiver extends BroadcastReceiver {
         // 播放暂停实现
         service.playPause(intent)
       case Constants.PLAY_ACTION_STOP =>
-        // TODO 实现停止
+        // 实现停止
         service.stopPlay()
       case Constants.PLAY_ACTION_PREVIOUS =>
-        // TODO 实现上一首
+        // 实现上一首
         service.playPrevious()
       case Constants.PLAY_ACTION_NEXT  =>
-        // TODO 实现下一首
+        // 实现下一首
         service.playNext()
 
     }
