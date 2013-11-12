@@ -1,9 +1,9 @@
 package org.ffmmx.example.musicplayer
 
 import org.scaloid.common._
-import android.widget.{TextView, Button, ImageButton}
-import android.view.{View, KeyEvent}
+import android.widget._
 import android.content.{Intent, Context, BroadcastReceiver}
+import android.widget.SeekBar.OnSeekBarChangeListener
 
 
 class MainActivity extends SActivity {
@@ -11,56 +11,74 @@ class MainActivity extends SActivity {
 
   implicit override val ctx: SActivity = basis
 
-  var receiver:BroadcastReceiver = _
+  var receiver: BroadcastReceiver = _
 
-  var songs:List[Song] = List(new Song(R.raw.test_music,"测试","semon"))
-  var playList:List[Song] = _
+  var nowPlay:Song = new Song(R.raw.test_music, "测试", "semon",290000)
+  var playList: List[Song] = _
 
   onCreate({
     setContentView(R.layout.main)
 
     //播放暂停按钮
-     val playPauseButton = find[ImageButton](R.id.playPauseButton)
+    find[ImageButton](R.id.playPauseButton)
       .onClick({
       // 发送播放或者停止请求到播放服务
 
       sendBroadcast(
-        new  Intent(Constants.MUSIC_SERVICE_ACTION)
+        new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_PLAYPAUSE)
-          .putExtra("song", songs(0))
+          .putExtra("song", nowPlay)
 
       )
     })
 
     //上一首按钮
-    val previousButton = find[ImageButton](R.id.previousButton)
+    find[ImageButton](R.id.previousButton)
       .onClick({
       // 发送上一首请求到播放服务
       sendBroadcast(
-       new Intent(Constants.MUSIC_SERVICE_ACTION)
+        new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_PREVIOUS)
-          .putExtra("song", "")
+          .putExtra("song", nowPlay)
 
       )
     })
 
     //下一首按钮
-    val nextButton = find[ImageButton](R.id.nextButton)
+    find[ImageButton](R.id.nextButton)
       .onClick({
       // 发送下一首请求到播放服务
       sendBroadcast(
-       new Intent(Constants.MUSIC_SERVICE_ACTION)
+        new Intent(Constants.MUSIC_SERVICE_ACTION)
           .putExtra("action", Constants.PLAY_ACTION_NEXT)
-          .putExtra("song", "")
+          .putExtra("song", nowPlay)
       )
     })
-    
-    
+    // 进度条
+    find[SeekBar](R.id.seekBar).onSeekBarChangeListener(new OnSeekBarChangeListener {
+      def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+         //在进度改变的时候
+      }
+
+      def onStopTrackingTouch(seekBar: SeekBar) {
+        //在停止拖动的时候
+        nowPlay.curTime=seekBar.progress/100 * nowPlay.length
+        sendBroadcast(
+          new Intent(Constants.MUSIC_SERVICE_ACTION)
+            .putExtra("action", Constants.PLAY_ACTION_SEEK)
+            .putExtra("song", nowPlay)
+        )
+      }
+
+      def onStartTrackingTouch(seekBar: SeekBar) {
+         //开始拖动的时候
+      }
+    })
 
     // TODO 播放列表
     // 注册播放器广播
     receiver = new MusicPlayerBroadcastReceiver()
-    registerReceiver(receiver,Constants.MUSIC_PLAYER_ACTION)
+    registerReceiver(receiver, Constants.MUSIC_PLAYER_ACTION)
     //开始播放服务
     startService(SIntent[MusicPlayService])
   })
@@ -75,13 +93,13 @@ class MainActivity extends SActivity {
 class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
   def onReceive(context: Context, intent: Intent) {
     // 更新界面图标
-    val container=context.asInstanceOf[MainActivity]
-    val songTitleView:TextView=container.find[TextView](R.id.songTitleView)
-    val songAuthorView:TextView=container.find[TextView](R.id.songAuthorView)
-    val songTimeLengthView:TextView=container.find[TextView](R.id.songTimeLengthView)
+    val container = context.asInstanceOf[MainActivity]
+    val songTitleView: TextView = container.find[TextView](R.id.songTitleView)
+    val songAuthorView: TextView = container.find[TextView](R.id.songAuthorView)
+    val songTimeLengthView: TextView = container.find[TextView](R.id.songTimeLengthView)
 
-    val playPauseButton=container.find[ImageButton](R.id.playPauseButton)
-    intent.getIntExtra("status",Constants.PLAY_STATUS_STOP) match {
+    val playPauseButton = container.find[ImageButton](R.id.playPauseButton)
+    intent.getIntExtra("status", Constants.PLAY_STATUS_STOP) match {
       case Constants.PLAY_STATUS_PLAY =>
         playPauseButton.imageResource(R.drawable.pause_sel)
       case _ =>
@@ -89,28 +107,43 @@ class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
     }
 
     // 更新界面歌曲
-    val songTitle=intent.getStringExtra("songTitle")
-    val songAuthor=intent.getStringExtra("songAuthor")
-    if(songTitle!=null)
-      songAuthorView.text=songAuthor
-    if(songAuthor!=null)
-      songTitleView.text=songTitle
-    // TODO 更新界面时间
+
+    //    val songTitle=intent.getStringExtra("songTitle")
+    //    val songAuthor=intent.getStringExtra("songAuthor")
+    //    if(songTitle!=null)
+    //      songAuthorView.text=songAuthor
+    //    if(songAuthor!=null)
+    //      songTitleView.text=songTitle
+    val song = intent.getSerializableExtra("song").asInstanceOf[Song]
+    if (song.author != null)
+      songAuthorView.text = song.author
+    if (song.title != null)
+      songTitleView.text = song.title
+    // 更新界面时间
+    if (song.length != 0)
+      songTimeLengthView.text = song.length
   }
 }
 
-class Song(val songId:Int,val title:String,val author:String) extends Serializable {
-  var length:Int = _
-  var bitrate:Int = _
-  var star:Int =_
-  var playTimes:Int=_
+class Song(val songId: Int, val title: String, val author: String) extends Serializable {
+  var length: Int = 0
+  var bitrate: Int = 0
+  var star: Int = 0
+  var playTimes: Int = 0
+  var curTime:Int = 0
 
-  def this(songId:Int,title:String,author:String,length:Int,bitrate:Int,star:Int,playTimes:Int) {
-    this(songId,title,author)
-    this.length=length
-    this.bitrate=bitrate
-    this.star=star
-    this.playTimes=playTimes
+  def this(songId: Int, title: String, author: String, length: Int, bitrate: Int, star: Int, playTimes: Int,curTime:Int) {
+    this(songId, title, author)
+    this.length = length
+    this.bitrate = bitrate
+    this.star = star
+    this.playTimes = playTimes
+    this.curTime = curTime
+  }
+
+  def this(songId: Int, title: String, author: String, length: Int) {
+    this(songId, title, author)
+    this.length = length
   }
 }
 
@@ -132,4 +165,5 @@ object Constants {
   val PLAY_ACTION_STOP = "stop"
   val PLAY_ACTION_PREVIOUS = "previous"
   val PLAY_ACTION_NEXT = "next"
+  val PLAY_ACTION_SEEK = "seek"
 }

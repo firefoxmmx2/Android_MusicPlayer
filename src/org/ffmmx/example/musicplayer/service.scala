@@ -24,17 +24,15 @@ class MusicPlayService extends SService{
     unregisterReceiver(receiver)
   })
 
-  def playPause(intent:Intent) {
+  def playPause(song:Song) {
     status match {
       case Constants.PLAY_STATUS_STOP =>
         status = Constants.PLAY_STATUS_PLAY
-        val song = intent.getSerializableExtra("song").asInstanceOf[Song]
         play(song)
         sendBroadcast(
           new Intent(Constants.MUSIC_PLAYER_ACTION)
           .putExtra("status",status)
-          .putExtra("songTitle",song.title)
-          .putExtra("songAuthor",song.author)
+          .putExtra("song",song)
         )
       case Constants.PLAY_STATUS_PLAY =>
         status=Constants.PLAY_STATUS_PAUSE
@@ -46,12 +44,10 @@ class MusicPlayService extends SService{
 
       case Constants.PLAY_STATUS_PAUSE =>
         status=Constants.PLAY_STATUS_PLAY
-        val song = intent.getSerializableExtra("song").asInstanceOf[Song]
         play(song)
         sendBroadcast(
           new Intent(Constants.MUSIC_PLAYER_ACTION).putExtra("status",status)
-            .putExtra("songTitle",song.title)
-            .putExtra("songAuthor",song.author)
+            .putExtra("song",song)
         )
     }
   }
@@ -70,9 +66,9 @@ class MusicPlayService extends SService{
     // todo 实现下一首
   }
 
+
   def play(song:Song) {
     player = MediaPlayer.create(this,song.songId)
-//    player.prepare()
     player.start()
   }
 
@@ -82,15 +78,20 @@ class MusicPlayService extends SService{
     }
   }
 
+  def seek(song:Song) {
+    if(player!=null)
+      player.seekTo(song.curTime)
+  }
 }
 
 class MusicPlayServiceBroadcastReceiver extends BroadcastReceiver {
   def onReceive(context: Context, intent: Intent) {
     val service=context.asInstanceOf[MusicPlayService]
+    val song=intent.getSerializableExtra("song").asInstanceOf[Song]
     intent.getStringExtra("action") match {
       case Constants.PLAY_ACTION_PLAYPAUSE =>
         // 播放暂停实现
-        service.playPause(intent)
+        service.playPause(song)
       case Constants.PLAY_ACTION_STOP =>
         // 实现停止
         service.stopPlay()
@@ -100,6 +101,9 @@ class MusicPlayServiceBroadcastReceiver extends BroadcastReceiver {
       case Constants.PLAY_ACTION_NEXT  =>
         // 实现下一首
         service.playNext()
+      case Constants.PLAY_ACTION_SEEK =>
+        // 跳到
+        service.seek(song)
 
     }
   }

@@ -57,5 +57,12 @@
                     android:layout_alignTop="@+id/previousButton"/>
         </RelativeLayout>
     </LinearLayout>
+    <SeekBar android:id="@+id/seekBar"
+                 android:layout_width="fill_parent"
+                 android:layout_height="wrap_content"
+                 android:max="100"
+                 android:progress="0"
+                 android:secondaryProgress="70"
+            />
 </LinearLayout>
 
