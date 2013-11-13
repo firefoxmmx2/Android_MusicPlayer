@@ -13,56 +13,48 @@ class MainActivity extends SActivity {
 
   var receiver: BroadcastReceiver = _
 
-  var nowPlay:Song = new Song(R.raw.test_music, "测试", "semon",290000)
+  var nowPlay: Song = new Song(R.raw.test_music, "测试", "semon", 290000)
   var playList: List[Song] = _
-
+  var songTitleView: TextView = _
+  var songAuthorView: TextView = _
+  var songTimeLengthView: TextView = _
+  var playPauseButton: ImageButton = _
+  var previousButton: ImageButton = _
+  var nextButton: ImageButton = _
+  var seekBar: SeekBar = _
   onCreate({
     setContentView(R.layout.main)
 
+    songTitleView = find[TextView](R.id.songTitleView)
+    songAuthorView = find[TextView](R.id.songAuthorView)
+    songTimeLengthView = find[TextView](R.id.songTimeLengthView)
+
     //播放暂停按钮
-    find[ImageButton](R.id.playPauseButton)
+    playPauseButton = find[ImageButton](R.id.playPauseButton)
       .onClick({
-      // 发送播放或者停止请求到播放服务
-
-      sendBroadcast(
-        new Intent(Constants.MUSIC_SERVICE_ACTION)
-          .putExtra("action", Constants.PLAY_ACTION_PLAYPAUSE)
-          .putExtra("song", nowPlay)
-
-      )
+      playPause()
     })
 
     //上一首按钮
-    find[ImageButton](R.id.previousButton)
+    previousButton = find[ImageButton](R.id.previousButton)
       .onClick({
-      // 发送上一首请求到播放服务
-      sendBroadcast(
-        new Intent(Constants.MUSIC_SERVICE_ACTION)
-          .putExtra("action", Constants.PLAY_ACTION_PREVIOUS)
-          .putExtra("song", nowPlay)
-
-      )
+      previous()
     })
 
     //下一首按钮
-    find[ImageButton](R.id.nextButton)
+    nextButton = find[ImageButton](R.id.nextButton)
       .onClick({
-      // 发送下一首请求到播放服务
-      sendBroadcast(
-        new Intent(Constants.MUSIC_SERVICE_ACTION)
-          .putExtra("action", Constants.PLAY_ACTION_NEXT)
-          .putExtra("song", nowPlay)
-      )
+      next()
     })
     // 进度条
-    find[SeekBar](R.id.seekBar).onSeekBarChangeListener(new OnSeekBarChangeListener {
+    seekBar = find[SeekBar](R.id.seekBar).onSeekBarChangeListener(new OnSeekBarChangeListener {
       def onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-         //在进度改变的时候
+        //在进度改变的时候
       }
 
       def onStopTrackingTouch(seekBar: SeekBar) {
         //在停止拖动的时候
-        nowPlay.curTime=seekBar.progress/100 * nowPlay.length
+        nowPlay.curTime = (seekBar.progress / 100.0 * nowPlay.length).toInt
         sendBroadcast(
           new Intent(Constants.MUSIC_SERVICE_ACTION)
             .putExtra("action", Constants.PLAY_ACTION_SEEK)
@@ -71,7 +63,7 @@ class MainActivity extends SActivity {
       }
 
       def onStartTrackingTouch(seekBar: SeekBar) {
-         //开始拖动的时候
+        //开始拖动的时候
       }
     })
 
@@ -88,17 +80,67 @@ class MainActivity extends SActivity {
     unregisterReceiver(receiver)
   })
 
+  def updateSeekBar(song: Song) {
+    runOnUiThread {
+      seekBar.progress = song.curTime * 100 / song.length
+      seekBar.secondaryProgress = seekBar.progress
+    }
+
+  }
+
+  def play(song: Song) {
+    nowPlay = song
+    nowPlay.curTime = 0
+  }
+
+  def previous() {
+    // 发送上一首请求到播放服务
+    sendBroadcast(
+      new Intent(Constants.MUSIC_SERVICE_ACTION)
+        .putExtra("action", Constants.PLAY_ACTION_PREVIOUS)
+        .putExtra("song", nowPlay)
+
+    )
+  }
+
+  def next() {
+    // 发送下一首请求到播放服务
+    sendBroadcast(
+      new Intent(Constants.MUSIC_SERVICE_ACTION)
+        .putExtra("action", Constants.PLAY_ACTION_NEXT)
+        .putExtra("song", nowPlay)
+    )
+  }
+
+  def playPause() {
+    if (nowPlay == null) {
+      try {
+        play(playList(0))
+      }
+    }
+
+    if (nowPlay != null)
+    // 发送播放或者停止请求到播放服务
+      sendBroadcast(
+        new Intent(Constants.MUSIC_SERVICE_ACTION)
+          .putExtra("action", Constants.PLAY_ACTION_PLAYPAUSE)
+          .putExtra("song", nowPlay)
+      )
+
+
+  }
 }
 
 class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
   def onReceive(context: Context, intent: Intent) {
     // 更新界面图标
     val container = context.asInstanceOf[MainActivity]
-    val songTitleView: TextView = container.find[TextView](R.id.songTitleView)
-    val songAuthorView: TextView = container.find[TextView](R.id.songAuthorView)
-    val songTimeLengthView: TextView = container.find[TextView](R.id.songTimeLengthView)
+    val songTitleView: TextView = container.songTitleView
+    val songAuthorView: TextView = container.songAuthorView
+    val songTimeLengthView: TextView = container.songTimeLengthView
 
-    val playPauseButton = container.find[ImageButton](R.id.playPauseButton)
+    val playPauseButton = container.playPauseButton
+
     intent.getIntExtra("status", Constants.PLAY_STATUS_STOP) match {
       case Constants.PLAY_STATUS_PLAY =>
         playPauseButton.imageResource(R.drawable.pause_sel)
@@ -107,21 +149,20 @@ class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
     }
 
     // 更新界面歌曲
-
-    //    val songTitle=intent.getStringExtra("songTitle")
-    //    val songAuthor=intent.getStringExtra("songAuthor")
-    //    if(songTitle!=null)
-    //      songAuthorView.text=songAuthor
-    //    if(songAuthor!=null)
-    //      songTitleView.text=songTitle
     val song = intent.getSerializableExtra("song").asInstanceOf[Song]
     if (song.author != null)
       songAuthorView.text = song.author
     if (song.title != null)
       songTitleView.text = song.title
     // 更新界面时间
-    if (song.length != 0)
-      songTimeLengthView.text = song.length
+    if (song.curTime != 0) {
+      if (container.nowPlay != null)
+        container.nowPlay.curTime = song.curTime
+      songTimeLengthView.text = song.curTime / 1000 / 60 + ":" + song.curTime / 1000 % 60 + " / " + song.length / 1000 / 60 + ":" + song.length / 1000 % 60
+    }
+    // 更新进度条
+    if (!container.seekBar.isPressed)
+      container.updateSeekBar(song)
   }
 }
 
@@ -130,9 +171,9 @@ class Song(val songId: Int, val title: String, val author: String) extends Seria
   var bitrate: Int = 0
   var star: Int = 0
   var playTimes: Int = 0
-  var curTime:Int = 0
+  var curTime: Int = 0
 
-  def this(songId: Int, title: String, author: String, length: Int, bitrate: Int, star: Int, playTimes: Int,curTime:Int) {
+  def this(songId: Int, title: String, author: String, length: Int, bitrate: Int, star: Int, playTimes: Int, curTime: Int) {
     this(songId, title, author)
     this.length = length
     this.bitrate = bitrate
