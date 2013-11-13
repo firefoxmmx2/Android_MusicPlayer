@@ -7,7 +7,6 @@ import android.media.MediaPlayer
 import scala.concurrent.future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
 class MusicPlayService extends SService {
   var status = Constants.PLAY_STATUS_STOP
   var receiver: BroadcastReceiver = _
@@ -27,11 +26,10 @@ class MusicPlayService extends SService {
         if (player != null && nowPlay != null) {
           nowPlay.curTime = player.getCurrentPosition
           sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
-            .putExtra("song", nowPlay)
-            .putExtra("status",status))
+            .putExtra("song", nowPlay))
 
         }
-        Thread.sleep(500)
+        Thread.sleep(250)
       }
     }
   })
@@ -45,7 +43,7 @@ class MusicPlayService extends SService {
   def playPause(song: Song) {
     status match {
       case Constants.PLAY_STATUS_STOP =>
-        play(song,true)
+        play(song, true)
       case Constants.PLAY_STATUS_PLAY =>
         pause()
       case Constants.PLAY_STATUS_PAUSE =>
@@ -59,13 +57,13 @@ class MusicPlayService extends SService {
   }
 
 
-  def play(song: Song,reset:Boolean = false) {
-    if(reset)
+  def play(song: Song, reset: Boolean = false) {
+    if (reset)
       player = MediaPlayer.create(this, song.songId)
     player.start()
 
     status = Constants.PLAY_STATUS_PLAY
-    nowPlay=song
+    nowPlay = song
     sendBroadcast(
       new Intent(Constants.MUSIC_PLAYER_ACTION)
         .putExtra("status", status)
@@ -80,15 +78,18 @@ class MusicPlayService extends SService {
       sendBroadcast(
         new Intent(Constants.MUSIC_PLAYER_ACTION)
           .putExtra("status", status)
-          .putExtra("song",nowPlay)
+          .putExtra("song", nowPlay)
       )
     }
   }
 
   def seek(song: Song) {
-    if (player != null&&nowPlay!=null)         {
+    if (player != null && nowPlay != null) {
       nowPlay.curTime = song.curTime
       player.seekTo(song.curTime)
+
+      sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
+        .putExtra("song", song))
     }
 
   }

@@ -67,7 +67,8 @@ class MainActivity extends SActivity {
       }
     })
 
-    // TODO 播放列表
+    // todo 播放列表
+
     // 注册播放器广播
     receiver = new MusicPlayerBroadcastReceiver()
     registerReceiver(receiver, Constants.MUSIC_PLAYER_ACTION)
@@ -81,14 +82,11 @@ class MainActivity extends SActivity {
   })
 
   def updateSeekBar(song: Song) {
-    runOnUiThread {
       seekBar.progress = song.curTime * 100 / song.length
       seekBar.secondaryProgress = seekBar.progress
-    }
-
   }
 
-  def play(song: Song) {
+  def prepare(song: Song) {
     nowPlay = song
     nowPlay.curTime = 0
   }
@@ -115,7 +113,7 @@ class MainActivity extends SActivity {
   def playPause() {
     if (nowPlay == null) {
       try {
-        play(playList(0))
+        prepare(playList(0))
       }
     }
 
@@ -141,12 +139,13 @@ class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
 
     val playPauseButton = container.playPauseButton
 
-    intent.getIntExtra("status", Constants.PLAY_STATUS_STOP) match {
-      case Constants.PLAY_STATUS_PLAY =>
-        playPauseButton.imageResource(R.drawable.pause_sel)
-      case _ =>
-        playPauseButton.imageResource(R.drawable.play_sel)
-    }
+    if (intent.getExtras.containsKey("status"))
+      intent.getIntExtra("status", Constants.PLAY_STATUS_STOP) match {
+        case Constants.PLAY_STATUS_PLAY =>
+          playPauseButton.imageResource(R.drawable.pause_sel)
+        case _ =>
+          playPauseButton.imageResource(R.drawable.play_sel)
+      }
 
     // 更新界面歌曲
     val song = intent.getSerializableExtra("song").asInstanceOf[Song]
