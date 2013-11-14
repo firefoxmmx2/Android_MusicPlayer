@@ -4,6 +4,7 @@ import org.scaloid.common._
 import android.widget._
 import android.content.{Intent, Context, BroadcastReceiver}
 import android.widget.SeekBar.OnSeekBarChangeListener
+import android.view.{ViewGroup, View}
 
 
 class MainActivity extends SActivity {
@@ -15,6 +16,9 @@ class MainActivity extends SActivity {
 
   var nowPlay: Song = new Song(R.raw.test_music, "测试", "semon", 290000)
   var playList: List[Song] = _
+  var previousPlay: Song = nowPlay
+  var nextPlay: Song = nowPlay
+
   var songTitleView: TextView = _
   var songAuthorView: TextView = _
   var songTimeLengthView: TextView = _
@@ -22,6 +26,7 @@ class MainActivity extends SActivity {
   var previousButton: ImageButton = _
   var nextButton: ImageButton = _
   var seekBar: SeekBar = _
+  var playListView: ListView = _
   onCreate({
     setContentView(R.layout.main)
 
@@ -60,15 +65,20 @@ class MainActivity extends SActivity {
             .putExtra("action", Constants.PLAY_ACTION_SEEK)
             .putExtra("song", nowPlay)
         )
+        sendBroadcast(new Intent(Constants.MUSIC_SERVICE_ACTION)
+          .putExtra("action", Constants.PLAY_ACTION_RESUME_UPDATE_SEEKBAR))
       }
 
       def onStartTrackingTouch(seekBar: SeekBar) {
         //开始拖动的时候
+        sendBroadcast(new Intent(Constants.MUSIC_SERVICE_ACTION)
+          .putExtra("action", Constants.PLAY_ACTION_SUSPEND_UPDATE_SEEKBAR))
       }
     })
 
     // todo 播放列表
-
+    playListView=find[ListView](R.id.playListView)
+//    val adaptor=new SimpleAdapter(MainActivity.this,)
     // 注册播放器广播
     receiver = new MusicPlayerBroadcastReceiver()
     registerReceiver(receiver, Constants.MUSIC_PLAYER_ACTION)
@@ -82,8 +92,8 @@ class MainActivity extends SActivity {
   })
 
   def updateSeekBar(song: Song) {
-      seekBar.progress = song.curTime * 100 / song.length
-      seekBar.secondaryProgress = seekBar.progress
+    seekBar.progress = song.curTime * 100 / song.length
+    seekBar.secondaryProgress = seekBar.progress
   }
 
   def prepare(song: Song) {
@@ -91,23 +101,20 @@ class MainActivity extends SActivity {
     nowPlay.curTime = 0
   }
 
+  /**
+   * 上一首
+   */
   def previous() {
-    // 发送上一首请求到播放服务
-    sendBroadcast(
-      new Intent(Constants.MUSIC_SERVICE_ACTION)
-        .putExtra("action", Constants.PLAY_ACTION_PREVIOUS)
-        .putExtra("song", nowPlay)
-
-    )
+    prepare(previousPlay)
+    playPause()
   }
 
+  /**
+   * 下一首
+   */
   def next() {
-    // 发送下一首请求到播放服务
-    sendBroadcast(
-      new Intent(Constants.MUSIC_SERVICE_ACTION)
-        .putExtra("action", Constants.PLAY_ACTION_NEXT)
-        .putExtra("song", nowPlay)
-    )
+    prepare(nextPlay)
+    playPause()
   }
 
   def playPause() {
@@ -126,6 +133,21 @@ class MainActivity extends SActivity {
       )
 
 
+  }
+
+  /**
+   * 播放列表配置器
+   */
+  class PlayListAdapter(implicit context:Context,data:List[Song]) extends BaseAdapter {
+    def getCount: Int = data.size
+
+    def getItem(position: Int): AnyRef = null
+
+    def getItemId(position: Int): Long = 0
+
+    def getView(position: Int, convertView: View, parent: ViewGroup): View = {
+      convertView
+    }
   }
 }
 
@@ -201,9 +223,12 @@ object Constants {
   val PLAY_STATUS_PAUSE = 2
 
   //播放动作
-  val PLAY_ACTION_PLAYPAUSE = "playpause"
-  val PLAY_ACTION_STOP = "stop"
-  val PLAY_ACTION_PREVIOUS = "previous"
-  val PLAY_ACTION_NEXT = "next"
-  val PLAY_ACTION_SEEK = "seek"
+  val PLAY_ACTION_PLAYPAUSE = 0
+  val PLAY_ACTION_PAUSE = 1
+  val PLAY_ACTION_STOP = 2
+  val PLAY_ACTION_PREVIOUS = 3
+  val PLAY_ACTION_NEXT = 4
+  val PLAY_ACTION_SEEK = 5
+  val PLAY_ACTION_SUSPEND_UPDATE_SEEKBAR = 6
+  val PLAY_ACTION_RESUME_UPDATE_SEEKBAR = 7
 }

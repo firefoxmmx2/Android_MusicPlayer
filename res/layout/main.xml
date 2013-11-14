@@ -63,5 +63,9 @@
                  android:max="100"
                  android:progress="0"
             />
+    <ListView android:id="@+id/playListView"
+              android:layout_width="fill_parent"
+              android:layout_height="match_parent"
+              />
 </LinearLayout>
 

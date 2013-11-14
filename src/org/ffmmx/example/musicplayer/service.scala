@@ -15,7 +15,7 @@ class MusicPlayService extends SService {
 
   var player: MediaPlayer = _
   var nowPlay: Song = _
-
+  var updateSeekStatus: Boolean = true
   onCreate({
     // 注册音乐服务广播
     receiver = new MusicPlayServiceBroadcastReceiver
@@ -25,9 +25,12 @@ class MusicPlayService extends SService {
       while (true) {
         if (player != null && nowPlay != null) {
           nowPlay.curTime = player.getCurrentPosition
-          sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
-            .putExtra("song", nowPlay))
-
+          if (updateSeekStatus)
+            sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
+              .putExtra("song", nowPlay))
+          if (nowPlay.curTime == nowPlay.length)
+            sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
+              .putExtra("next", true))
         }
         Thread.sleep(250)
       }
@@ -43,7 +46,7 @@ class MusicPlayService extends SService {
   def playPause(song: Song) {
     status match {
       case Constants.PLAY_STATUS_STOP =>
-        play(song, true)
+        play(song, reset=true)
       case Constants.PLAY_STATUS_PLAY =>
         pause()
       case Constants.PLAY_STATUS_PAUSE =>
@@ -93,13 +96,14 @@ class MusicPlayService extends SService {
     }
 
   }
+
 }
 
 class MusicPlayServiceBroadcastReceiver extends BroadcastReceiver {
   def onReceive(context: Context, intent: Intent) {
     val service = context.asInstanceOf[MusicPlayService]
     val song = intent.getSerializableExtra("song").asInstanceOf[Song]
-    intent.getStringExtra("action") match {
+    intent.getIntExtra("action",-1) match {
       case Constants.PLAY_ACTION_PLAYPAUSE =>
         // 播放暂停实现
         service.playPause(song)
@@ -115,7 +119,10 @@ class MusicPlayServiceBroadcastReceiver extends BroadcastReceiver {
       case Constants.PLAY_ACTION_SEEK =>
         // 跳到
         service.seek(song)
-
+      case Constants.PLAY_ACTION_SUSPEND_UPDATE_SEEKBAR =>
+        service.updateSeekStatus=false
+      case Constants.PLAY_ACTION_RESUME_UPDATE_SEEKBAR =>
+        service.updateSeekStatus=true
     }
   }
 }
