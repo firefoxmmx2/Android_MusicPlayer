@@ -5,22 +5,22 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
     <TextView android:id="@+id/seq"
-              android:layout_width="0"
+              android:layout_width="0dp"
               android:layout_height="wrap_content"
               android:layout_weight="10"
             />
     <TextView android:id="@+id/author"
-              android:layout_width="0"
+              android:layout_width="0dp"
               android:layout_height="wrap_content"
               android:layout_weight="30"
             />
     <TextView android:id="@+id/title"
-              android:layout_width="0"
+              android:layout_width="0dp"
               android:layout_height="wrap_content"
               android:layout_weight="50"
             />
     <TextView android:id="@+id/length"
-              android:layout_width="0"
+              android:layout_width="0dp"
               android:layout_height="wrap_content"
               android:layout_weight="10"
             />

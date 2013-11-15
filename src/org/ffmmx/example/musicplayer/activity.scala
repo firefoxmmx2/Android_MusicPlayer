@@ -4,7 +4,8 @@ import org.scaloid.common._
 import android.widget._
 import android.content.{Intent, Context, BroadcastReceiver}
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.view.{ViewGroup, View}
+import android.view.{LayoutInflater, ViewGroup, View}
+import scala.collection.mutable.ListBuffer
 
 
 class MainActivity extends SActivity {
@@ -15,7 +16,7 @@ class MainActivity extends SActivity {
   var receiver: BroadcastReceiver = _
 
   var nowPlay: Song = new Song(R.raw.test_music, "测试", "semon", 290000)
-  var playList: List[Song] = _
+  var playList: ListBuffer[Song] = ListBuffer(nowPlay)
   var previousPlay: Song = nowPlay
   var nextPlay: Song = nowPlay
 
@@ -27,6 +28,7 @@ class MainActivity extends SActivity {
   var nextButton: ImageButton = _
   var seekBar: SeekBar = _
   var playListView: ListView = _
+
   onCreate({
     setContentView(R.layout.main)
 
@@ -77,8 +79,9 @@ class MainActivity extends SActivity {
     })
 
     // todo 播放列表
-    playListView=find[ListView](R.id.playListView)
-//    val adaptor=new SimpleAdapter(MainActivity.this,)
+    playListView = find[ListView](R.id.playListView)
+    playListView.adapter(new PlayListAdapter(playList))
+
     // 注册播放器广播
     receiver = new MusicPlayerBroadcastReceiver()
     registerReceiver(receiver, Constants.MUSIC_PLAYER_ACTION)
@@ -135,20 +138,43 @@ class MainActivity extends SActivity {
 
   }
 
+  class PlayListItem(val seq: TextView, val author: TextView, val title: TextView,val length: TextView)
+
   /**
    * 播放列表配置器
    */
-  class PlayListAdapter(implicit context:Context,data:List[Song]) extends BaseAdapter {
+  class PlayListAdapter(val data: ListBuffer[Song])(implicit val context: Context) extends BaseAdapter {
     def getCount: Int = data.size
 
-    def getItem(position: Int): AnyRef = null
+    def getItem(position: Int): Song = data(position)
 
-    def getItemId(position: Int): Long = 0
+    def getItemId(position: Int): Long = position
 
     def getView(position: Int, convertView: View, parent: ViewGroup): View = {
-      convertView
+      var playListItem:PlayListItem = null
+      var resultView:View = convertView
+      if (convertView == null) {
+        resultView = LayoutInflater.from(context).inflate(R.layout.playlist, null)
+        resultView.tag = playListItem =  new PlayListItem(
+          resultView.find[TextView](R.id.seq),
+          resultView.find[TextView](R.id.author),
+          resultView.find[TextView](R.id.title),
+          resultView.find[TextView](R.id.length)
+        )
+      }
+      else {
+        playListItem = convertView.tag.asInstanceOf[PlayListItem]
+      }
+
+      playListItem.seq.text=position
+      playListItem.author.text=data(position).author
+      playListItem.title.text=data(position).title
+      playListItem.length.text=data(position).length
+      println("4"*13)
+      resultView
     }
   }
+
 }
 
 class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
