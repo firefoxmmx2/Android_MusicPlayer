@@ -4,8 +4,10 @@ import org.scaloid.common._
 import android.widget._
 import android.content.{Intent, Context, BroadcastReceiver}
 import android.widget.SeekBar.OnSeekBarChangeListener
-import android.view.{LayoutInflater, ViewGroup, View}
+import android.view._
 import scala.collection.mutable.ListBuffer
+import scala.concurrent
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
 class MainActivity extends SActivity {
@@ -16,7 +18,7 @@ class MainActivity extends SActivity {
   var receiver: BroadcastReceiver = _
 
   var nowPlay: Song = new Song(R.raw.test_music, "测试", "semon", 290000)
-  var playList: ListBuffer[Song] = ListBuffer(nowPlay)
+  val playList: ListBuffer[Song] = ListBuffer(nowPlay)
   var previousPlay: Song = nowPlay
   var nextPlay: Song = nowPlay
 
@@ -94,6 +96,11 @@ class MainActivity extends SActivity {
     unregisterReceiver(receiver)
   })
 
+  override def onCreateOptionsMenu(menu: Menu): Boolean = {
+    getMenuInflater.inflate(R.menu.main_menu, menu)
+    super.onCreateOptionsMenu(menu)
+  }
+
   def updateSeekBar(song: Song) {
     seekBar.progress = song.curTime * 100 / song.length
     seekBar.secondaryProgress = seekBar.progress
@@ -120,6 +127,22 @@ class MainActivity extends SActivity {
     playPause()
   }
 
+  override def onOptionsItemSelected(item: MenuItem): Boolean = {
+    item.getItemId match {
+      case R.id.mainmenu_add =>
+        // todo 打开一个对话框,添加音乐文件
+      case R.id.mainmenu_about =>
+        alert("关于", "一个用于测试的简单播放器")
+      case R.id.mainmenu_setting =>
+      // todo 打开设置界面,然后设置媒体库或者搜索音乐文件的文件夹
+      case R.id.mainmenu_quit =>
+        stopService(SIntent[MusicPlayService])
+        finish()
+    }
+
+    super.onOptionsItemSelected(item)
+  }
+
   def playPause() {
     if (nowPlay == null) {
       try {
@@ -138,7 +161,7 @@ class MainActivity extends SActivity {
 
   }
 
-  class PlayListItem(val seq: TextView, val author: TextView, val title: TextView,val length: TextView)
+  class PlayListItem(val seq: TextView, val author: TextView, val title: TextView, val length: TextView)
 
   /**
    * 播放列表配置器
@@ -151,26 +174,27 @@ class MainActivity extends SActivity {
     def getItemId(position: Int): Long = position
 
     def getView(position: Int, convertView: View, parent: ViewGroup): View = {
-      var playListItem:PlayListItem = null
-      var resultView:View = convertView
-      if (convertView == null) {
+      var playListItem: PlayListItem = null
+      var resultView: View = convertView
+      if (resultView == null) {
         resultView = LayoutInflater.from(context).inflate(R.layout.playlist, null)
-        resultView.tag = playListItem =  new PlayListItem(
+        playListItem = new PlayListItem(
           resultView.find[TextView](R.id.seq),
           resultView.find[TextView](R.id.author),
           resultView.find[TextView](R.id.title),
           resultView.find[TextView](R.id.length)
         )
+        resultView.tag(playListItem)
       }
       else {
-        playListItem = convertView.tag.asInstanceOf[PlayListItem]
+        playListItem = resultView.tag.asInstanceOf[PlayListItem]
       }
-
-      playListItem.seq.text=position
-      playListItem.author.text=data(position).author
-      playListItem.title.text=data(position).title
-      playListItem.length.text=data(position).length
-      println("4"*13)
+      if (playListItem != null) {
+        playListItem.seq.text(position.toString)
+        playListItem.author.text = data(position).author
+        playListItem.title.text = data(position).title
+        playListItem.length.text = data(position).length / 1000 / 60 + ":" + data(position).length / 1000 % 60
+      }
       resultView
     }
   }
