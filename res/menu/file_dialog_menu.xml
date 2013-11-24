@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/filedialogmenu_back" android:title="@string/filedialogmenu_back"
+          android:showAsAction="always"/>
+    <item android:id="@+id/filedialogmenu_go" android:title="@string/filedialogmenu_go"/>
+    <item android:id="@+id/filedialogmenu_home" android:title="@string/filedialogmenu_home"
+          android:showAsAction="always"/>
+    <item android:id="@+id/filedialogmenu_up" android:title="@string/filedialogmenu_up" android:showAsAction="always"/>
+</menu>

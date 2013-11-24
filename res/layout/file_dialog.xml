@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+    <TextView android:id="@+id/location" android:layout_width="fill_parent" android:layout_height="wrap_content"/>
+    <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+        <CheckBox android:id="@+id/filedialog_checkbox" android:layout_width="0dp" android:layout_height="wrap_content"
+                  android:layout_weight="10"/>
+        <Button android:id="@+id/filedialog_enter" android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="30"
+                android:text="@string/enter"/>
+        <Button android:id="@+id/filedialog_cancel" android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="30"
+                android:text="@string/cancel"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="10"/>
+    </LinearLayout>
+    <ListView android:id="@+id/fileListView"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent"/>
+</LinearLayout>
