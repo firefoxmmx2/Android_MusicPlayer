@@ -10,6 +10,7 @@ import android.os.Environment
 import java.io.{FileFilter, File}
 import scala.collection.mutable
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
 
 
 class MainActivity extends SActivity {
@@ -135,7 +136,8 @@ class MainActivity extends SActivity {
   override def onOptionsItemSelected(item: MenuItem): Boolean = {
     item.getItemId match {
       case R.id.mainmenu_add =>
-      // todo 打开一个对话框,添加音乐文件
+        //  打开一个对话框,添加音乐文件
+        startActivity(SIntent[FileDialog])
       case R.id.mainmenu_about =>
         alert("关于", "一个用于测试的简单播放器")
       case R.id.mainmenu_setting =>
@@ -316,9 +318,10 @@ class FileDialog extends SActivity {
     location = find[TextView](R.id.location)
     enterButton = find[Button](R.id.filedialog_enter)
       .onClick {
+      val adapter = fileListView.adapter.asInstanceOf[FileListAdapter]
       sendBroadcast(new Intent(Constants.FILE_DIALOG_ACTION)
-        .putExtra("selectFiles", Array[File](new File(""))) // todo 发送选择的文件列表
-      )
+        .putExtra("selectFiles", selectFiles(adapter.selecteds.filter(_._2).map(m => adapter.data(m._1)).toList // 发送选择的文件列表
+      )))
     }
     fileListView = find[ListView](R.id.fileListView)
     allSelectCheckbox = find[CheckBox](R.id.filedialog_checkbox).onCheckedChanged {
@@ -389,14 +392,16 @@ class FileDialog extends SActivity {
    * 得到所选择的文件
    */
   def selectFiles(files: List[File]): Array[File] = {
-    @tailrec
-    def findFiles(file: File,files:List[File]): List[File] = {
-      file.isDirectory match {
-        case true => findFiles(file,file.listFiles(fileFilter).toList)
-        case false => files ::: file :: Nil
-      }
+    def findFiles(files: List[File]): List[File] = {
+      files.flatMap {
+        file => file.isDirectory match {
+          case false => List(file)
+          case true => findFiles(file.listFiles(fileFilter).toList)
+        }
+      }.toList
     }
-    files.flatMap {findFiles(_,List[File]())}.toArray
+
+    findFiles(files).toArray
   }
 
   class FileList(val checkbox: CheckBox, val img: ImageView, val filename: TextView)
