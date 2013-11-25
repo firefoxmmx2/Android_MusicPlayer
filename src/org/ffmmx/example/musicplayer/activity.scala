@@ -8,6 +8,8 @@ import android.view._
 import scala.collection.mutable.{ListBuffer, Stack}
 import android.os.Environment
 import java.io.{FileFilter, File}
+import scala.collection.mutable
+import scala.annotation.tailrec
 
 
 class MainActivity extends SActivity {
@@ -291,16 +293,23 @@ class FileDialog extends SActivity {
   val HOME_PATH = Environment.getExternalStorageDirectory.getPath
   val LOCATION_LABEL = "位置: "
   val locationList: ListBuffer[File] = ListBuffer[File]()
-  var current:File=new File(HOME_PATH)
+  var current: File = new File(HOME_PATH)
+
   override def basis = this
 
   implicit override val ctx: SActivity = this
   var location: TextView = _
   var enterButton: Button = _
-  var cancelButton: Button = _
   var fileListView: ListView = _
   var allSelectCheckbox: CheckBox = _
-
+  val fileFilter = new FileFilter {
+    def accept(file: File): Boolean = {
+      file.getName match {
+        case ".android_secure" => false
+        case _ => true
+      }
+    }
+  }
   onCreate {
     setContentView(R.layout.file_dialog)
 
@@ -308,27 +317,21 @@ class FileDialog extends SActivity {
     enterButton = find[Button](R.id.filedialog_enter)
       .onClick {
       sendBroadcast(new Intent(Constants.FILE_DIALOG_ACTION)
-        .putExtra("selectFiles",Array[File](new File(""))) // todo 发送选择的文件列表
+        .putExtra("selectFiles", Array[File](new File(""))) // todo 发送选择的文件列表
       )
-    }
-    cancelButton = find[Button](R.id.filedialog_cancel)
-      .onClick {
-          // todo 取消全部选中的内容
     }
     fileListView = find[ListView](R.id.fileListView)
     allSelectCheckbox = find[CheckBox](R.id.filedialog_checkbox).onCheckedChanged {
-      // todo 全选按钮实现
+      //全选按钮实现
+      val adapter = fileListView.adapter.asInstanceOf[FileListAdapter]
+      if (allSelectCheckbox.isChecked)
+        (0 to adapter.getCount).foreach(x => adapter.selecteds += (x -> true))
+      else (0 to adapter.getCount).foreach(x => adapter.selecteds += (x -> false))
     }
     location.text(LOCATION_LABEL + HOME_PATH)
 
     if (Environment.getExternalStorageDirectory.canRead) {
-      fileListView.adapter(new FileListAdapter(Environment.getExternalStorageDirectory.listFiles(new FileFilter {
-        def accept(file: File): Boolean =
-          file.getName match {
-            case ".android_secure" => false
-            case _ => true
-          }
-      }).toList))
+      fileListView.adapter(new FileListAdapter(Environment.getExternalStorageDirectory.listFiles(fileFilter).toList))
     }
 
   }
@@ -338,15 +341,15 @@ class FileDialog extends SActivity {
       case R.id.filedialogmenu_back =>
         back()
       case R.id.filedialogmenu_home =>
+        openDir(new File(HOME_PATH))
     }
     super.onOptionsItemSelected(item)
   }
 
   override def onCreateOptionsMenu(menu: Menu): Boolean = {
-    getMenuInflater.inflate(R.menu.file_dialog_menu,menu)
+    getMenuInflater.inflate(R.menu.file_dialog_menu, menu)
     super.onCreateOptionsMenu(menu)
   }
-
 
 
   /**
@@ -366,7 +369,7 @@ class FileDialog extends SActivity {
    */
   def back() {
     if (!locationList.isEmpty) {
-      jump(locationList.remove(locationList.size-1))
+      jump(locationList.remove(locationList.size - 1))
     }
 
   }
@@ -376,15 +379,30 @@ class FileDialog extends SActivity {
    * @param dir
    */
   private def jump(dir: File) {
-    current=dir
+    current = dir
     location.text(LOCATION_LABEL + dir.getPath)
     fileListView.adapter.asInstanceOf[FileListAdapter].data = dir.listFiles().toList
     fileListView.adapter.asInstanceOf[FileListAdapter].notifyDataSetChanged()
   }
 
-  class FileList(val checkbox: CheckBox, val img: ImageView, val filename: TextView, val filepath: String)
+  /**
+   * 得到所选择的文件
+   */
+  def selectFiles(files: List[File]): Array[File] = {
+    @tailrec
+    def findFiles(file: File,files:List[File]): List[File] = {
+      file.isDirectory match {
+        case true => findFiles(file,file.listFiles(fileFilter).toList)
+        case false => files ::: file :: Nil
+      }
+    }
+    files.flatMap {findFiles(_,List[File]())}.toArray
+  }
+
+  class FileList(val checkbox: CheckBox, val img: ImageView, val filename: TextView)
 
   class FileListAdapter(var data: List[File])(implicit context: Context) extends BaseAdapter {
+    var selecteds = Map[Int, Boolean]()
 
     def getCount: Int = data.size
 
@@ -400,8 +418,7 @@ class FileDialog extends SActivity {
           filelistView = LayoutInflater.from(context).inflate(R.layout.filelist, null)
           fileList = new FileList(filelistView.find[CheckBox](R.id.filelist_checkbox),
             filelistView.find[ImageView](R.id.filelist_img),
-            filelistView.find[TextView](R.id.filelist_filename),
-            data(position).getPath
+            filelistView.find[TextView](R.id.filelist_filename)
           )
           filelistView.tag(fileList)
         case _ =>
@@ -412,6 +429,13 @@ class FileDialog extends SActivity {
         case true => R.drawable.gtk_directory
         case false => R.drawable.gtk_file
       })
+
+      fileList.checkbox.onCheckedChanged {
+        if (fileList.checkbox.isChecked)
+          selecteds += (position -> true)
+        else
+          selecteds -= position
+      }.setChecked(selecteds.getOrElse(position, false))
       filelistView.onClick {
         v =>
           if (v.id != R.id.filedialog_checkbox) {

@@ -9,14 +9,11 @@
                   android:orientation="horizontal">
         <CheckBox android:id="@+id/filedialog_checkbox" android:layout_width="0dp" android:layout_height="wrap_content"
                   android:layout_weight="10"/>
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="30"/>
         <Button android:id="@+id/filedialog_enter" android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="30"
                 android:text="@string/enter"/>
-        <Button android:id="@+id/filedialog_cancel" android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="30"
-                android:text="@string/cancel"/>
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="10"/>
     </LinearLayout>
     <ListView android:id="@+id/fileListView"
