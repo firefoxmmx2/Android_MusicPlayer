@@ -18,8 +18,7 @@ class MainActivity extends SActivity {
 
   implicit override val ctx: SActivity = basis
 
-  var receiver: BroadcastReceiver = _
-
+  val receiver: BroadcastReceiver = new MusicPlayerBroadcastReceiver
   var nowPlay: Song = new Song(R.raw.test_music, "测试", "semon", 290000)
   val playList: ListBuffer[Song] = ListBuffer(nowPlay)
   var previousPlay: Song = nowPlay
@@ -88,13 +87,10 @@ class MainActivity extends SActivity {
     playListView.adapter(new PlayListAdapter(playList))
 
     // 注册播放器广播
-    receiver = new MusicPlayerBroadcastReceiver()
+//    receiver = new MusicPlayerBroadcastReceiver()
     registerReceiver(receiver, Constants.MUSIC_PLAYER_ACTION)
     //开始播放服务
     startService(SIntent[MusicPlayService])
-
-    //测试文件选择
-    startActivity(SIntent[FileDialog])
   })
 
   onDestroy({
@@ -241,6 +237,12 @@ class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
     // 更新进度条
     if (!container.seekBar.isPressed)
       container.updateSeekBar(song)
+//    更新播放列表
+    if(intent.getSerializableExtra("selectFiles") != null){
+      val files=intent.getSerializableExtra("selectFiles").asInstanceOf[List[File]]
+//      files.foreach(f => container.playList += new Song(container.get))
+//      todo 更新播放列表
+    }
   }
 }
 
@@ -271,8 +273,6 @@ object Constants {
   val MUSIC_PLAYER_ACTION = "org.ffmmx.example.musicplayer.MusicPlayerActivity"
   //播放服务广播action
   val MUSIC_SERVICE_ACTION = "org.ffmmx.example.musicplayer.MusicPlayerService"
-  //文件选择广播
-  val FILE_DIALOG_ACTION = "org.ffmmx.example.musicplayer.FileDialog"
   //播放状态 停止
   val PLAY_STATUS_STOP = 0
   //播放状态 播放
@@ -319,9 +319,10 @@ class FileDialog extends SActivity {
     enterButton = find[Button](R.id.filedialog_enter)
       .onClick {
       val adapter = fileListView.adapter.asInstanceOf[FileListAdapter]
-      sendBroadcast(new Intent(Constants.FILE_DIALOG_ACTION)
+      sendBroadcast(new Intent(Constants.MUSIC_PLAYER_ACTION)
         .putExtra("selectFiles", selectFiles(adapter.selecteds.filter(_._2).map(m => adapter.data(m._1)).toList // 发送选择的文件列表
       )))
+      finish()
     }
     fileListView = find[ListView](R.id.fileListView)
     allSelectCheckbox = find[CheckBox](R.id.filedialog_checkbox).onCheckedChanged {
