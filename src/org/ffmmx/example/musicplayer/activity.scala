@@ -246,25 +246,34 @@ class MusicPlayerBroadcastReceiver extends BroadcastReceiver {
   }
 }
 
-class Song(val songId: Int, val title: String, val author: String) extends Serializable {
+class Song(val title: String, val author: String) extends Serializable {
   var length: Int = 0
   var bitrate: Int = 0
   var star: Int = 0
   var playTimes: Int = 0
   var curTime: Int = 0
+  var filepath:String=_
+  var songId:Int=_
 
   def this(songId: Int, title: String, author: String, length: Int, bitrate: Int, star: Int, playTimes: Int, curTime: Int) {
-    this(songId, title, author)
+    this( title, author)
     this.length = length
     this.bitrate = bitrate
     this.star = star
     this.playTimes = playTimes
     this.curTime = curTime
+    this.songId = songId
   }
 
   def this(songId: Int, title: String, author: String, length: Int) {
-    this(songId, title, author)
+    this( title, author)
     this.length = length
+    this.songId=songId
+  }
+
+  def this(title:String , author:String,filepath:String){
+    this(title,author)
+    this.filepath=filepath
   }
 }
 

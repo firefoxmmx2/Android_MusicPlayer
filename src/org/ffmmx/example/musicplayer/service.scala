@@ -62,7 +62,10 @@ class MusicPlayService extends SService {
 
   def play(song: Song, reset: Boolean = false) {
     if (reset)
-      player = MediaPlayer.create(this, song.songId)
+      if(song.songId!=null)
+        player = MediaPlayer.create(this, song.songId)
+      else
+        player=MediaPlayer.create(this,song.filepath)
     player.start()
 
     status = Constants.PLAY_STATUS_PLAY
